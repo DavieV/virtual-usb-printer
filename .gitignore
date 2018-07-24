@@ -1,0 +1,4 @@
+cdc-acm
+hid-mouse
+hid-keyboard
+*.o
