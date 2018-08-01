@@ -3,10 +3,6 @@
 
 #include "usbip-constants.h"
 
-//USB definitions
-#define byte unsigned char
-#define word unsigned short
-
 // USB Device Descriptor
 // https://www.keil.com/pack/doc/mw/USB/html/_u_s_b__device__descriptor.html
 typedef struct __attribute__((__packed__)) _USB_DEVICE_DESCRIPTOR {

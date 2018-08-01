@@ -33,7 +33,7 @@ const CONFIG_PRINTER printer_config = {
     // Configuration Descriptor.
     0x09,  // Size of this descriptor in bytes.
     USB_DESCRIPTOR_CONFIGURATION,  // descriptor type.
-    0x??,  // Total length of data for this configuration.
+    0x0020,  // Total length of data for this configuration.
     0x01,  // Number of interfaces in this configuration.
     0x01,  // Index value for this configuration.
     0x00,  // Configuration string descriptor index.
@@ -67,7 +67,7 @@ const CONFIG_PRINTER printer_config = {
     USB_DESCRIPTOR_ENDPOINT,  // descriptor type.
     0x81,  // Endpoint Address.
     0x02,  // Attributes (Bulk Endpoint).
-    255,   // Max transfer size.
+    0x08,   // Max transfer size.
     0x00,  // Interval.
   }
 };
@@ -91,7 +91,7 @@ const unsigned char string_1[] = {
 
 // Product String Descriptor.
 const unsigned char string_2[] = {
-  0x2A, USB_DESCRIPTOR_STRING, // bLength, bDscType
+  0x28, USB_DESCRIPTOR_STRING, // bLength, bDscType
   'V', 0x00,
   'i', 0x00,
   'r', 0x00,
@@ -104,14 +104,13 @@ const unsigned char string_2[] = {
   'S', 0x00,
   'B', 0x00,
   ' ', 0x00,
-  'K', 0x00,
-  'e', 0x00,
-  'y', 0x00,
-  'b', 0x00,
-  'o', 0x00,
-  'a', 0x00,
+  'P', 0x00,
   'r', 0x00,
-  'd', 0x00,
+  'i', 0x00,
+  'n', 0x00,
+  't', 0x00,
+  'e', 0x00,
+  'r', 0x00,
 };
 
 // Configuration String Descriptor.
@@ -129,3 +128,8 @@ const char *configuration = (const char *)&printer_config;
 const USB_INTERFACE_DESCRIPTOR *interfaces[] = {&printer_config.dev_int};
 const unsigned char *strings[] = {string_0, string_1, string_2, string_3};
 const USB_DEVICE_QUALIFIER_DESCRIPTOR dev_qua = {};
+
+int main() {
+  printf("usb printer started....\n");
+  usbip_run(&dev_dsc);
+}

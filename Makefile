@@ -1,15 +1,19 @@
-CC=gcc
+CC=g++ -std=c++14
 CFLAGS= -Wall -DLINUX 
-PROGS= hid-mouse hid-keyboard
 
-all:	${PROGS}
+all: main
 
-hid-mouse:	usbip.c hid-mouse.c 
-		${CC} ${CFLAGS} usbip.c -c 
-		${CC} ${CFLAGS} usbip.o hid-mouse.c -o hid-mouse 
+main: usbip.o usb_printer.o server.o main.cc
+	${CC} ${CFLAGS} usbip.o usb_printer.o server.o main.cc -o main
 
-hid-keyboard:	usbip.c hid-keyboard.c 
-		${CC} ${CFLAGS} usbip.c -c 
-		${CC} ${CFLAGS} usbip.o hid-keyboard.c -o hid-keyboard
+usbip.o: usbip.cc
+	${CC} ${CFLAGS} -c usbip.cc
+
+usb_printer.o: usbip.o usb_printer.cc
+	${CC} ${CFLAGS} -c usb_printer.cc
+
+server.o: usbip.o usb_printer.o server.cc
+	${CC} ${CFLAGS} -c server.cc
+
 clean:
-		rm -f ${PROGS} core core.* *.o temp.* *.out typescript*
+	rm -f ${PROGS} core core.* *.o temp.* *.out typescript*

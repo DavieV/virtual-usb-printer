@@ -23,29 +23,31 @@
    For e-mail suggestions :  lcgamboa@yahoo.com
    ######################################################################## */
 
+#ifndef __USBIP_USBIP_H__
+#define __USBIP_USBIP_H__
+
 #include "device_descriptors.h"
+#include "usbip-constants.h"
+
+#include <vector>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/un.h>
-#define min(a, b) ((a) < (b) ? (a) : (b))
 
-// system headers independent
-#include <errno.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cerrno>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <unistd.h>
 
-// Define constants
-#define TCP_SERV_PORT 3240
-#define OP_REQ_DEVLIST_CMD 0x8005
-#define OP_REQ_IMPORT_CMD 0x8003
-
 typedef struct sockaddr sockaddr;
+
+// Temporary forward declaration until the code can become more organized.
+class UsbPrinter;
 
 /*
  * Structures used by the USBIP protocol for communication.
@@ -188,26 +190,63 @@ typedef struct __attribute__((__packed__)) _StandardDeviceRequest {
   word wLength;
 } StandardDeviceRequest;
 
-// Utility functions
+// Sets the corresponding members of |header| using the given values.
+void set_op_header(word version, word command, int status, OP_HEADER *header);
+
+// Sets the corresponding members of |devlist_header| using the given values.
 void set_op_rep_devlist_header(word version, word command, int status,
                                int numExportedDevices,
                                OP_REP_DEVLIST_HEADER *header);
 
-void send_usb_req(int sockfd, USBIP_RET_SUBMIT *usb_req, char *data,
-                  unsigned int size, unsigned int status);
+void set_op_rep_device(const USB_DEVICE_DESCRIPTOR& dev_dsc,
+                       const USB_CONFIGURATION_DESCRIPTOR& configuration,
+                       OP_REP_DEVICE* device);
+
+// Assigns the values from |interfaces| into |rep_interfaces|.
+void set_op_rep_devlist_interfaces(
+    const std::vector<USB_INTERFACE_DESCRIPTOR>& interfaces,
+    OP_REP_DEVLIST_INTERFACE **rep_interfaces);
+
+// Creates the OP_REP_DEVLIST message used to respond to requests to list the
+// host's exported USB devices.
+void create_op_rep_devlist(
+    const USB_DEVICE_DESCRIPTOR& device,
+    const USB_CONFIGURATION_DESCRIPTOR& config,
+    const std::vector<USB_INTERFACE_DESCRIPTOR>& interfaces,
+    OP_REP_DEVLIST *list);
+
+// Creates the OP_REP_IMPORT message used to respond to a request to attach a
+// host USB device.
+void create_op_rep_import(const USB_DEVICE_DESCRIPTOR& device,
+                          const USB_CONFIGURATION_DESCRIPTOR& config,
+                          OP_REP_IMPORT *rep);
+
+// Handles an OP_REQ_DEVLIST request by sending an OP_REP_DEVLIST message which
+// describes the virtual USB device along |sockfd|.
+void handle_device_list(const UsbPrinter& printer, int sockfd);
+
+// Handles and OP_REQ_IMPORT request by sending an OP_REP_IMPORT message which
+// describes the virtual USB device along |sockfd|.
+int handle_attach(const UsbPrinter& printer, int sockfd);
+
+void print_usbip_cmd_submit(const USBIP_CMD_SUBMIT& command);
+void print_standard_device_request(const StandardDeviceRequest& request);
+
+USBIP_RET_SUBMIT CreateUsbipRetSubmit(const USBIP_CMD_SUBMIT& usb_request);
+
+// Sends a USBIP_RET_SUBMIT message to the socket described by |sockfd|.
+// |usb_request| contains the metadata for the message and |data| contains the
+// actual URB data bytes.
+void SendUsbRequest(int sockfd, const USBIP_CMD_SUBMIT& usb_request,
+                    const char* data, unsigned int size, unsigned int status);
 void usbip_run(const USB_DEVICE_DESCRIPTOR *dev_dsc);
 
-// implemented by user
-extern const USB_DEVICE_DESCRIPTOR dev_dsc;
-extern const USB_DEVICE_QUALIFIER_DESCRIPTOR dev_qua;
-extern const char *configuration;
-extern const USB_INTERFACE_DESCRIPTOR *interfaces[];
-extern const unsigned char *strings[];
+// Converts the contents of either a USBIP_CMD_SUBMIT or USB_RET_SUBMIT message
+// into network byte order.
+void pack_usbip(int* data, size_t msg_size);
 
-void handle_data(int sockfd, USBIP_RET_SUBMIT *usb_req, int bl);
-void handle_hid_request(int sockfd,
-                        const StandardDeviceRequest *control_request,
-                        USBIP_RET_SUBMIT *usb_request);
-void handle_hid_get_descriptor(int sockfd,
-                               const StandardDeviceRequest *control_request,
-                               USBIP_RET_SUBMIT *usb_request);
+// Converts the contents of either a USBIP_CMD_SUBMIT or USB_RET_SUBMIT message
+// into host byte order.
+void unpack_usbip(int *data, size_t msg_size);
+
+#endif  // __USBIP_USBIP_H__
