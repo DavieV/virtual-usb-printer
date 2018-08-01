@@ -1,5 +1,5 @@
-cdc-acm
 hid-mouse
 hid-keyboard
+main
 *.o
 *.log
